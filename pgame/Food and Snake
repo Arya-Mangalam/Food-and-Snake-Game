@@ -1,0 +1,198 @@
+#Code By Arya
+
+import pygame
+import random
+import os
+
+pygame.init()
+
+# Colors
+red1=(255, 153, 255)
+red=(0, 0, 153)
+green_original=(0,250,0)
+blueoriginal=(0,0,250)
+white=(255,255,255)
+pinkoriginal=(250,0,250)
+black=(80,80,80)
+yellow=(250,250,0)
+new_black=(207, 219, 141)
+
+green=(0, 102, 0)
+pink=(51, 0, 102)
+blue=(204, 255, 255)
+voilet=(255, 0, 102)
+
+# Creating window
+screen_width = 900
+screen_height = 600
+gameWindow = pygame.display.set_mode((screen_width, screen_height))
+
+# Game Title
+pygame.display.set_caption("Food and Snake by Arya")
+pygame.display.update()
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 55)
+
+#for writing text on screen
+def text_screen(text, color, x, y):
+    screen_text = font.render(text, True, color)
+    gameWindow.blit(screen_text, [x,y])
+
+#creating snake list
+def plot_snake(gameWindow, color, snk_list, snake_size):
+    for x,y in snk_list:
+        pygame.draw.circle(gameWindow, color, [x, y], snake_size, 0)
+
+#home page 
+def welcomepage():
+    exit_game = False
+    while not exit_game:
+        gameWindow.fill(pink)
+        text_screen("Food & Snakes by Arya", blue, 260, 250)
+        text_screen("Press Enter/Space To Play", blue, 232, 290)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit_game = True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE or event.key==pygame.K_RETURN:
+                    game_level()
+
+        pygame.display.update()
+        clock.tick(60)
+
+#select level
+def game_level():
+    exit_game = False
+    while not exit_game:
+        gameWindow.fill(green)
+        text_screen("Select Level", voilet, 280, 150)
+        text_screen("Press e for Easy", voilet, 240, 200)
+        text_screen("Press m for Medium", voilet, 240, 250)
+        text_screen("Press h for Hard", voilet, 240, 300)
+        for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    exit_game = True
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_e:
+                        if(not os.path.exists("hiscore_easy.txt")):
+                            with open("hiscore_easy.txt", "w")  as f:
+                                f.write("0")
+                        gameloop(20,'hiscore_easy.txt')
+                    elif event.key==pygame.K_m:
+                        if(not os.path.exists("hiscore_medium.txt")):
+                            with open("hiscore_medium.txt", "w") as f:
+                                f.write("0")
+                        gameloop(40,'hiscore_medium.txt')
+                    elif event.key==pygame.K_h:
+                        if(not os.path.exists("hiscore_hard.txt")):
+                            with open("hiscore_hard.txt", "w") as f:
+                                f.write("0")
+                        gameloop(60,'hiscore_hard.txt')
+
+        pygame.display.update()
+        clock.tick(60)
+    pygame.quit()
+    quit()
+
+
+# Game Loop
+def gameloop(fps,hiscorefile):
+    # specific variables for game
+    exit_game = False
+    game_over = False
+    snake_x = 45
+    snake_y = 55
+    velocity_x = 0
+    velocity_y = 0
+    snk_list = []
+    snk_length = 1
+    #access highscore file
+    with open(hiscorefile, "r") as f:
+        hiscore = f.read()
+
+    food_x = random.randint(20, screen_width / 2)
+    food_y = random.randint(20, screen_height / 2)
+    score = 0
+    init_velocity = 5
+    snake_size = 10
+    #gameover 
+    while not exit_game:
+        if game_over:
+            with open(hiscorefile, "w") as f:
+                f.write(str(hiscore))
+            gameWindow.fill((0, 153, 153))
+            text_screen("Game Over!",red,280,250)
+            text_screen("Score: " + str(score), red, 280, 300)
+            text_screen("Highscore: "+str(hiscore), red, 280,350)
+            text_screen("Press Enter To Play Again", red, 200, 500)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    exit_game = True
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        game_level()
+
+        else:
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    exit_game = True
+                #snake moment
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RIGHT:
+                        velocity_x = init_velocity
+                        velocity_y = 0
+
+                    if event.key == pygame.K_LEFT:
+                        velocity_x = - init_velocity
+                        velocity_y = 0
+
+                    if event.key == pygame.K_UP:
+                        velocity_y = - init_velocity
+                        velocity_x = 0
+
+                    if event.key == pygame.K_DOWN:
+                        velocity_y = init_velocity
+                        velocity_x = 0
+
+                    if event.key == pygame.K_q:
+                        score +=10
+
+            snake_x = snake_x + velocity_x
+            snake_y = snake_y + velocity_y
+            #food eating
+            if abs(snake_x - food_x)<10 and abs(snake_y - food_y)<10:
+                score +=1
+                food_x = random.randint(20, screen_width / 2)
+                food_y = random.randint(20, screen_height / 2)
+                snk_length +=5
+                if score>int(hiscore):
+                    hiscore = score
+            #game window
+            gameWindow.fill(pink)
+            text_screen("Score: " + str(score), red1, 5, 5)
+            pygame.draw.circle(gameWindow, green_original, [food_x, food_y],5,0)
+
+            #adding list to snake head 
+            head = []
+            head.append(snake_x)
+            head.append(snake_y)
+            snk_list.append(head)
+
+            if len(snk_list)>snk_length:
+                del snk_list[0]
+
+            if head in snk_list[:-1]:
+                game_over = True
+
+            if snake_x<0 or snake_x>screen_width or snake_y<0 or snake_y>screen_height:
+                game_over = True
+            plot_snake(gameWindow, new_black, snk_list, snake_size)
+        pygame.display.update()
+        clock.tick(fps)
+
+    pygame.quit()
+    quit()
+welcomepage()
